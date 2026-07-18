@@ -1,0 +1,5 @@
+# Opencode local SQLite database
+name: opencode
+type: sqlite
+options:
+  filename: opencode.db

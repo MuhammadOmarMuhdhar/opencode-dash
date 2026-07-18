@@ -1,0 +1,19 @@
+{
+  "name": "opencode-telematics",
+  "version": "1.0.0",
+  "description": "Opencode usage analytics dashboard",
+  "private": true,
+  "scripts": {
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "build:strict": "cd app && npm run build:strict",
+    "sources": "cd app && npm run sources",
+    "sources:strict": "cd app && npm run sources:strict",
+    "preview": "cd app && npm run preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MuhammadOmarMuhdhar/opencode-telematics.git"
+  },
+  "license": "ISC"
+}

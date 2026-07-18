@@ -1,0 +1,16 @@
+node_modules
+dist
+.env
+archive/
+
+# Evidence.dev app
+app/.evidence/
+app/build/
+app/node_modules/
+app/.sources-manifest.json
+
+# vscode
+app/.vscode
+
+# Local database copies
+*.db
