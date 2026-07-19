@@ -93,7 +93,3 @@ Run from project root:
 - Layout: `<Grid cols=3>` for metric cards, `---` for section breaks
 - BigValues: use `fmt=usd` for money, `fmt=num0` for counts, `fmt=usd2` for precision
 - Minimal — no inline comments in production pages
-
-## Key Reference
-
-Load the `opencode-memory` skill (from `~/.agents/skills/opencode-memory/`) for DB schema, example queries, and storage locations — it has the full SQLite schema this project depends on.

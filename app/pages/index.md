@@ -2,30 +2,45 @@
 title: Opencode Telematics 
 ---
 
-Open-source dashboard that visualizes your opencode usage. The data stays on your device, there's no backend, no account, and nothing gets sent anywhere.
+Open-source dashboard that visualizes your opencode usage. 
+
+<!-- The data stays on your device, there's no backend, no account, and nothing gets sent anywhere. -->
 
 Source on [GitHub](https://github.com/your-org/opencode-telematics).
 
 --
 
 ```sql overview
-select
-      total_sessions,
-      total_messages,
-      total_parts,
-      total_projects,
-      total_cost,
-      total_tokens,
-      avg_session_cost,
-      avg_messages_per_session,
-      date_from,
-      date_to
-from opencode.overviewStats
+WITH filtered_sessions AS (
+  SELECT * FROM opencode.sessionRows
+  WHERE ('${inputs.dateRange.start}' = '' OR session_date >= '${inputs.dateRange.start}')
+    AND ('${inputs.dateRange.end}' = '' OR session_date <= '${inputs.dateRange.end}')
+)
+SELECT
+  (SELECT COUNT(*) FROM filtered_sessions) as total_sessions,
+  (SELECT SUM(message_count) FROM opencode.messageCounts WHERE session_id IN (SELECT id FROM filtered_sessions)) as total_messages,
+  (SELECT SUM(part_count) FROM opencode.partCounts WHERE session_id IN (SELECT id FROM filtered_sessions)) as total_parts,
+  (SELECT COUNT(*) FROM opencode.projectInfo WHERE id IN (SELECT project_id FROM filtered_sessions)) as total_projects,
+  COALESCE(ROUND(SUM(cost), 6), 0) as total_cost,
+  COALESCE(SUM(tokens_input + tokens_output + tokens_reasoning + tokens_cache_read + tokens_cache_write), 0) as total_tokens,
+  COALESCE(ROUND(AVG(cost), 6), 0) as avg_session_cost,
+  COALESCE(ROUND(
+    (SELECT SUM(message_count) FROM opencode.messageCounts WHERE session_id IN (SELECT id FROM filtered_sessions)) * 1.0 / (SELECT COUNT(*) FROM filtered_sessions), 2
+  ), 0) as avg_messages_per_session,
+  (SELECT MIN(session_date) FROM filtered_sessions) as date_from,
+  (SELECT MAX(session_date) FROM filtered_sessions) as date_to
+FROM filtered_sessions
+```
+
+```sql all_session_dates
+select session_date from opencode.sessionsOverTime
 ```
 
 ## Activity
 
-<Value data={overview} column=date_from fmt="mmm d, yyyy"/> - <Value data={overview} column=date_to fmt="mmm d, yyyy"/>
+<DateRange name="dateRange" data={all_session_dates} dates=session_date title="Date Range" presetRanges={['Last 7 Days', 'Last 30 Days', 'Last 90 Days', 'Last Year', 'All Time']} defaultValue='All Time' />
+
+<!-- <Value data={overview} column=date_from fmt="mmm d, yyyy"/> - <Value data={overview} column=date_to fmt="mmm d, yyyy"/> -->
 
 <Grid cols=3>
 
@@ -42,19 +57,14 @@ from opencode.overviewStats
 <br>
 
 ```sql sessions_over_time
-select
-      date,
-      sessions,
-      messages,
-      cost,
-      tokens
-from opencode.sessionsOverTime
-order by date
+select * from opencode.sessionsOverTime
+where ('${inputs.dateRange.start}' = '' OR session_date >= '${inputs.dateRange.start}')
+  AND ('${inputs.dateRange.end}' = '' OR session_date <= '${inputs.dateRange.end}')
 ```
 
 <CalendarHeatmap
   data={sessions_over_time}
-  date="date"
+  date="session_date"
   value="sessions"
   title="Daily Activity"
   subtitle="Opencode sessions per day"
@@ -65,13 +75,22 @@ order by date
 />
 
 ```sql model_distribution
-select
-      modelId,
-      sessionCount,
-      totalCost,
-      totalTokens
-from opencode.modelDistribution
-order by totalTokens desc
+WITH filtered AS (
+  SELECT * FROM opencode.sessionRows
+  WHERE model IS NOT NULL AND model != ''
+    AND ('${inputs.dateRange.start}' = '' OR session_date >= '${inputs.dateRange.start}')
+    AND ('${inputs.dateRange.end}' = '' OR session_date <= '${inputs.dateRange.end}')
+)
+SELECT
+  modelId,
+  provider,
+  COUNT(*) as sessionCount,
+  ROUND(SUM(cost), 6) as totalCost,
+  SUM(tokens_input + tokens_output + tokens_reasoning + tokens_cache_read + tokens_cache_write) as totalTokens,
+  ROUND(AVG(cost), 6) as avgCostPerSession
+FROM filtered
+GROUP BY modelId, provider
+ORDER BY totalTokens desc
 ```
 <div style="height: 300px;">
 <ECharts config={
@@ -93,9 +112,9 @@ order by totalTokens desc
 }/>
 </div>
 
-<LinkButton url='/activity'>See full activity breakdown →</LinkButton>
+<!-- <LinkButton url='/activity'>See full activity breakdown →</LinkButton> -->
 
------
+<!-- ----- -->
 
 # Costing
 
@@ -109,14 +128,14 @@ You have used **<Value data={overview} column=total_cost fmt=usd2 />** in tokens
 </DataTable> -->
 
 ```sql daily_cost_by_model
-select date, modelId, cost
-from opencode.modelUsageByDay
-order by date
+select * from opencode.modelUsageByDay
+where ('${inputs.dateRange.start}' = '' OR session_date >= '${inputs.dateRange.start}')
+  AND ('${inputs.dateRange.end}' = '' OR session_date <= '${inputs.dateRange.end}')
 ```
 
 <BarChart
     data={daily_cost_by_model}
-    x=date
+    x=session_date
     y=cost
     series=modelId
     title="Daily Costs"
@@ -127,20 +146,41 @@ order by date
 
 
 ```sql project_list
-select
-      project,
-      vcs,
-      sessionCount as Sessions,
-      totalTokens as Tokens,
-      totalCost as Cost
-from opencode.projectCostList
+WITH parsed AS (
+  SELECT *,
+    length(display_name) - length(replace(display_name, '/', '')) as slash_count
+  FROM opencode.projectInfo
+),
+short_paths AS (
+  SELECT id, vcs, timeCreated, timeUpdated,
+    CASE
+      WHEN slash_count = 0 THEN display_name
+      WHEN slash_count = 1 THEN regexp_extract(display_name, '([^/]+)$', 1)
+      ELSE regexp_extract(display_name, '([^/]+/[^/]+)$', 1)
+    END as short_path
+  FROM parsed
+)
+SELECT
+  sp.short_path as project,
+  sp.vcs,
+  sp.timeCreated,
+  sp.timeUpdated,
+  COUNT(s.id) as sessionCount,
+  ROUND(SUM(COALESCE(s.cost, 0)), 6) as totalCost,
+  SUM(COALESCE(s.tokens_input, 0) + COALESCE(s.tokens_output, 0) + COALESCE(s.tokens_reasoning, 0) + COALESCE(s.tokens_cache_read, 0) + COALESCE(s.tokens_cache_write, 0)) as totalTokens
+FROM short_paths sp
+LEFT JOIN opencode.sessionRows s ON s.project_id = sp.id
+  AND ('${inputs.dateRange.start}' = '' OR s.session_date >= '${inputs.dateRange.start}')
+  AND ('${inputs.dateRange.end}' = '' OR s.session_date <= '${inputs.dateRange.end}')
+GROUP BY sp.id, sp.short_path, sp.vcs, sp.timeCreated, sp.timeUpdated
+ORDER BY sessionCount DESC
 ```
 
 <DataTable data={project_list} title="Projects" subtitle="Token usage and cost by project">
     <Column id=project />
-    <Column id=Sessions contentType=number fmt=num0 />
-    <Column id=Tokens contentType=number fmt=num0 />
-    <Column id=Cost contentType=number fmt=usd />
+    <Column id=sessionCount contentType=number fmt=num0 title="Sessions" />
+    <Column id=totalTokens contentType=number fmt=num0 title="Tokens" />
+    <Column id=totalCost contentType=number fmt=usd title="Cost" />
 </DataTable>
 
-<LinkButton url='/cost'>See full cost breakdown →</LinkButton>
+<!-- <LinkButton url='/cost'>See full cost breakdown →</LinkButton> -->
