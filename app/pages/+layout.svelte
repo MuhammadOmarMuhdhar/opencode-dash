@@ -9,6 +9,7 @@
 	{data}
 	title="Opencode Dash"
 	githubRepo="https://github.com/MuhammadOmarMuhdhar/opencode-dash"
+	neverShowQueries
 >
 	<slot slot="content" />
 </EvidenceDefaultLayout>
