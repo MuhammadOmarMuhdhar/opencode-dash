@@ -6,6 +6,7 @@
     "build:strict": "evidence build:strict",
     "dev": "evidence dev --open /",
     "test": "evidence build",
+    "test:e2e": "node --test ../test/e2e.test.js",
     "sources": "evidence sources",
     "sources:strict": "evidence sources --strict",
     "preview": "evidence preview"
@@ -21,7 +22,8 @@
   "dependencies": {
     "@evidence-dev/core-components": "^5.4.2",
     "@evidence-dev/evidence": "^40.1.8",
-    "@evidence-dev/sqlite": "^2.0.9"
+    "@evidence-dev/sqlite": "^2.0.9",
+    "html-to-image": "^1.11.13"
   },
   "overrides": {
     "jsonwebtoken": "9.0.0",
