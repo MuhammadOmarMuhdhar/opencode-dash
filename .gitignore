@@ -23,3 +23,4 @@ app/.gitignore
 
 # Build output
 app/build/
+*.tgz

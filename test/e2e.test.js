@@ -42,7 +42,7 @@ describe('E2E smoke test', { timeout: TIMEOUT }, () => {
 
   it('serves the dashboard page', async () => {
     const html = await waitForPage(`http://localhost:${PORT}`);
-    assert.ok(html.includes('Opencode Telematics'), 'page contains title');
+    assert.ok(html.includes('Opencode Dash'), 'page contains title');
     assert.ok(!html.includes('Error in Query'), 'no SQL error on page');
     assert.ok(!html.includes('not found'), 'no 404 text on page');
     assert.ok(html.includes('github.com/MuhammadOmarMuhdhar'), 'GitHub link present');

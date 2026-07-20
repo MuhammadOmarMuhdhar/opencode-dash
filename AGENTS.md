@@ -1,4 +1,4 @@
-# opencode-telematics
+# opencode-dash
 
 Evidence.dev dashboard that visualizes your opencode CLI usage from the local SQLite database.
 
@@ -6,7 +6,7 @@ Evidence.dev dashboard that visualizes your opencode CLI usage from the local SQ
 
 ```bash
 npm install
-npx opencode-telematics
+npx opencode-dash
 ```
 
 The CLI auto-detects your OS, finds opencode's SQLite database, and starts a local dashboard at `http://localhost:3000`.
@@ -22,7 +22,7 @@ The CLI auto-detects your OS, finds opencode's SQLite database, and starts a loc
 ## Commands
 
 Run from project root:
-- `npx opencode-telematics` — one-command launch (detects DB, starts dashboard)
+- `npx opencode-dash` — one-command launch (detects DB, starts dashboard)
 - `npm run dev` — start dev server directly (opens at `/`)
 - `npm run build` — build static site
 - `npm run build:strict` — strict build
@@ -35,7 +35,7 @@ Run from project root:
 | Command | Scope | Time |
 |---------|-------|------|
 | `npm run build` | CI test — builds static dashboard, catches broken SQL and layout errors | ~25s |
-| `npm run test:e2e` | E2E smoke test — full `npx` simulation (pack → install → build → serve → page fetch) | ~90s |
+| `npm run test:e2e` | E2E smoke test — full `npx` simulation (pack → install → build → serve → page fetch) | ~25s |
 
 CI runs `npm run build` on every push and PR via `.github/workflows/ci.yml`.
 
@@ -43,8 +43,22 @@ Before publishing to npm, run `npm run test:e2e` from the `app/` directory. It v
 - Tarball contains all required files
 - `postinstall` installs Evidence dependencies correctly
 - Sources extract from the SQLite database
-- Static site builds without errors
-- Page serves and contains expected content
+- Page serves and contains expected content (title, no errors, GitHub link)
+
+You can also test the exact tarball locally before publishing:
+
+```bash
+# Rebuild dashboard + repack tarball
+rm -rf app/.evidence/ app/build/ app/.sources-manifest.json
+npm run sources
+npm run build
+rm -f app/.gitignore
+npm pack
+
+# Test globally
+npm install -g ./opencode-dash-1.0.0.tgz
+opencode-dash
+```
 
 ## Architecture
 

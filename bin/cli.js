@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { join, resolve, extname } = require('path');
 const { homedir, platform } = require('os');
-const { existsSync, copyFileSync, symlinkSync, unlinkSync, readFileSync, createReadStream } = require('fs');
+const { existsSync, copyFileSync, symlinkSync, unlinkSync, cpSync, createReadStream } = require('fs');
 const { spawnSync } = require('child_process');
 const http = require('http');
 
@@ -17,6 +17,8 @@ const MIME = {
   '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
   '.woff': 'font/woff', '.ttf': 'font/ttf', '.arrow': 'application/octet-stream',
+  '.wasm': 'application/wasm',
+  '.parquet': 'application/octet-stream',
 };
 
 function getDbPath() {
@@ -60,10 +62,10 @@ if (!runNpm('sources')) {
   process.exit(1);
 }
 
-console.log('\n  Building static dashboard...');
-if (!runNpm('build')) {
-  console.error('\n  Failed to build dashboard. See above for details.\n');
-  process.exit(1);
+const DATA_SRC = join(APP_DIR, '.evidence', 'template', 'static', 'data');
+const DATA_DST = join(BUILD_DIR, 'data');
+if (existsSync(DATA_SRC)) {
+  cpSync(DATA_SRC, DATA_DST, { recursive: true });
 }
 
 function startServer(port) {
