@@ -11,16 +11,25 @@
 		return dataUrl === 'data:,';
 	}
 
-	async function waitForCanvases(node) {
-		const canvases = node.querySelectorAll('canvas');
-		if (canvases.length === 0) return;
+	function isSvgPopulated(svg) {
+		return svg.querySelectorAll('*').length > 0;
+	}
 
-		const maxAttempts = 20;
+	async function waitForCharts(node) {
+		const canvases = node.querySelectorAll('canvas');
+		const svgs = node.querySelectorAll('svg');
+
+		if (canvases.length === 0 && svgs.length === 0) return;
+
+		await new Promise(resolve => setTimeout(resolve, 300));
+
+		const maxAttempts = 30;
 		const interval = 500;
 
 		for (let attempt = 0; attempt < maxAttempts; attempt++) {
-			const blank = Array.from(canvases).some(isCanvasBlank);
-			if (!blank) return;
+			const canvasBlank = Array.from(canvases).some(isCanvasBlank);
+			const svgEmpty = Array.from(svgs).some(svg => !isSvgPopulated(svg));
+			if (!canvasBlank && !svgEmpty) return;
 			await new Promise(resolve => setTimeout(resolve, interval));
 		}
 	}
@@ -29,13 +38,16 @@
 		const node = document.getElementById(sectionId);
 		if (!node) return null;
 
-		await waitForCanvases(node);
+		await waitForCharts(node);
 
-		const dataUrl = await toPng(node, {
+		const opts = {
 			cacheBust: true,
 			pixelRatio: 2,
 			backgroundColor: '#ffffff'
-		});
+		};
+
+		await toPng(node, opts);
+		const dataUrl = await toPng(node, opts);
 
 		return dataUrl;
 	}

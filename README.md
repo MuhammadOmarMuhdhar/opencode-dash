@@ -4,7 +4,7 @@ opencode-dash is a free dashboard that visualizes your [opencode](https://github
 
 [![License](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 [![CI](https://img.shields.io/github/actions/workflow/status/MuhammadOmarMuhdhar/opencode-telematics/ci.yml?style=flat-square)](https://github.com/MuhammadOmarMuhdhar/opencode-telematics/actions)
-<!-- [![npm](https://img.shields.io/npm/v/opencode-dash?style=flat-square)](https://www.npmjs.com/package/opencode-dash) -->
+[![npm](https://img.shields.io/npm/v/opencode-dash?style=flat-square)](https://www.npmjs.com/package/opencode-dash)
 
 ## Quick Start
 
