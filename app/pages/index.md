@@ -1,5 +1,5 @@
 ---
-title: Opencode Telematics
+title: Opencode Dash
 ---
 
 <!-- Open-source dashboard that visualizes your opencode usage.  -->
@@ -66,9 +66,9 @@ where ('${inputs.dateRange.start}' = '' OR session_date >= '${inputs.dateRange.s
 <CalendarHeatmap
   data={sessions_over_time}
   date="session_date"
-  value="sessions"
+  value="tokens"
   title="Daily Activity"
-  subtitle="Opencode sessions per day"
+  subtitle="Tokens consumer per day"
   yearLabel={true}
   dayLabel={true}
   chartAreaHeight={150}
@@ -121,7 +121,9 @@ ORDER BY totalTokens desc
 
 <!-- ----- -->
 
-# Costing
+<div style="padding: 24px">
+
+## Costing
 
 You have used **<Value data={overview} column=total_cost fmt=usd2 />** in tokens this period (<Value data={overview} column=date_from fmt="mmm d, yyyy"/> – <Value data={overview} column=date_to fmt="mmm d, yyyy"/>).
 
@@ -189,3 +191,5 @@ ORDER BY sessionCount DESC
 </DataTable>
 
 <!-- <LinkButton url='/cost'>See full cost breakdown →</LinkButton> -->
+
+</div>

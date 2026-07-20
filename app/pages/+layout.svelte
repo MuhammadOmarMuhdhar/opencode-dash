@@ -7,8 +7,8 @@
 
 <EvidenceDefaultLayout
 	{data}
-	title="Opencode Telematics"
-	githubRepo="https://github.com/MuhammadOmarMuhdhar/opencode-telematics"
+	title="Opencode Dash"
+	githubRepo="https://github.com/MuhammadOmarMuhdhar/opencode-dash"
 >
 	<slot slot="content" />
 </EvidenceDefaultLayout>

@@ -5,7 +5,6 @@ archive/
 
 # Evidence.dev app
 app/.evidence/
-app/build/
 app/node_modules/
 app/.sources-manifest.json
 
@@ -18,3 +17,9 @@ app/sources/opencode/connection.yaml
 # Local database copies (symlinks)
 app/sources/opencode/opencode.db
 *.db
+
+# Evidence auto-generated gitignore (contains "build" which breaks npm pack)
+app/.gitignore
+
+# Build output
+app/build/

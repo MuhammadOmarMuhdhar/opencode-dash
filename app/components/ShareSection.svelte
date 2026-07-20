@@ -6,11 +6,30 @@
 
 	let capturing = false;
 
+	function isCanvasBlank(canvas) {
+		const dataUrl = canvas.toDataURL();
+		return dataUrl === 'data:,';
+	}
+
+	async function waitForCanvases(node) {
+		const canvases = node.querySelectorAll('canvas');
+		if (canvases.length === 0) return;
+
+		const maxAttempts = 20;
+		const interval = 500;
+
+		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			const blank = Array.from(canvases).some(isCanvasBlank);
+			if (!blank) return;
+			await new Promise(resolve => setTimeout(resolve, interval));
+		}
+	}
+
 	async function captureNode() {
 		const node = document.getElementById(sectionId);
 		if (!node) return null;
 
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await waitForCanvases(node);
 
 		const dataUrl = await toPng(node, {
 			cacheBust: true,
@@ -72,27 +91,23 @@
 
 	.download-icon {
 		position: absolute;
-		top: 28px;
+		top: 36px;
 		right: 8px;
 		z-index: 10;
 		background: rgba(255, 255, 255, 0.9);
-		border: 1px solid #e5e7eb;
-		border-radius: 4px;
+
 		padding: 6px;
 		cursor: pointer;
 		color: #6b7280;
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 		font-family: inherit;
 		transition: all 0.15s ease;
 	}
 
 	.download-icon:hover {
-		color: #374151;
-		background: rgba(255, 255, 255, 1);
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		color: #3b82f6;
 	}
 
 	.download-icon:disabled {
