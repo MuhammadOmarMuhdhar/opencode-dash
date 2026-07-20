@@ -1,6 +1,6 @@
 # opencode-dash
 
-opencode-dash is self-hosted hosted dashboard that visualizes your [opencode](https://github.com/anomalyco/opencode) CLI usage analytics. It Visualizes sessions, tokens, costs, models, and agents, from your local SQLite database.
+opencode-dash is a self-hosted hosted dashboard that visualizes your [opencode](https://github.com/anomalyco/opencode) CLI usage analytics. It Visualizes sessions, tokens, costs, models, and agents, from your local SQLite database.
 
 [![License](https://img.shields.io/badge/License-ISC-blue.svg)](https://opensource.org/licenses/ISC)
 [![CI](https://img.shields.io/github/actions/workflow/status/MuhammadOmarMuhdhar/opencode-telematics/ci.yml?style=flat-square)](https://github.com/MuhammadOmarMuhdhar/opencode-telematics/actions)
