@@ -2,27 +2,54 @@
 
 Evidence.dev dashboard that visualizes your opencode CLI usage from the local SQLite database.
 
+## Usage
+
+```bash
+npm install
+npx opencode-telematics
+```
+
+The CLI auto-detects your OS, finds opencode's SQLite database, and starts a local dashboard at `http://localhost:3000`.
+
 ## Tech Stack
 
 - **Framework:** Evidence.dev (Svelte-based, Markdown-driven reporting)
-- **Data source:** SQLite (`@evidence-dev/sqlite` plugin) — reads `~/.local/share/opencode/opencode.db`
-- **Connection config:** `app/sources/opencode/connection.yaml`
+- **Data source:** SQLite (`@evidence-dev/sqlite` plugin) — reads opencode's local `opencode.db`
+- **Connection config:** `app/sources/opencode/connection.yaml` (generated at runtime from `connection.template.yaml`)
+- **CLI:** `bin/cli.js` — detects OS, creates DB symlink, launches dev server
 - **Hosting:** Static site via `evidence build`, served any way
 
 ## Commands
 
 Run from project root:
-- `npm run dev` — start dev server (opens at `/`)
+- `npx opencode-telematics` — one-command launch (detects DB, starts dashboard)
+- `npm run dev` — start dev server directly (opens at `/`)
 - `npm run build` — build static site
 - `npm run build:strict` — strict build
 - `npm run sources` — refresh data sources
 - `npm run preview` — preview built site
 - `npm run sources:strict` — refresh with strict mode
 
+## Testing
+
+| Command | Scope | Time |
+|---------|-------|------|
+| `npm run build` | CI test — builds static dashboard, catches broken SQL and layout errors | ~25s |
+| `npm run test:e2e` | E2E smoke test — full `npx` simulation (pack → install → build → serve → page fetch) | ~90s |
+
+CI runs `npm run build` on every push and PR via `.github/workflows/ci.yml`.
+
+Before publishing to npm, run `npm run test:e2e` from the `app/` directory. It verifies:
+- Tarball contains all required files
+- `postinstall` installs Evidence dependencies correctly
+- Sources extract from the SQLite database
+- Static site builds without errors
+- Page serves and contains expected content
+
 ## Architecture
 
-- **Queries:** 34 `.sql` files in `app/sources/opencode/`. Each is a named query referenced in pages as `opencode.queryName`.
-- **Pages:** 9 `.md` files in `app/pages/`. Markdown with Evidence components: `<Value>`, `<BigValue>`, `<BarChart>`, `<ECharts>`, `<CalendarHeatmap>`, `<DataTable>`, `<Grid>`, `<LinkButton>`, `<AreaChart>`.
+- **Queries:** 9 `.sql` files in `app/sources/opencode/`. Each is a named query referenced in pages as `opencode.queryName`.
+- **Pages:** 1 `.md` file in `app/pages/`. Markdown with Evidence components: `<Value>`, `<BigValue>`, `<BarChart>`, `<ECharts>`, `<CalendarHeatmap>`, `<DataTable>`, `<Grid>`, `<LinkButton>`.
 - **No backend, no account, no telemetry.** Data stays on-device.
 
 ## Core Tables (from opencode SQLite)

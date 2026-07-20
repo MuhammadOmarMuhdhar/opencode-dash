@@ -1,0 +1,12 @@
+app/node_modules/
+app/.evidence/
+app/build/
+app/.sources-manifest.json
+app/.vscode
+app/sources/opencode/connection.yaml
+app/sources/opencode/opencode.db
+.git/
+.gitignore
+AGENTS.md
+archive/
+*.tgz

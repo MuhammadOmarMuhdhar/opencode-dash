@@ -1,15 +1,36 @@
 {
   "name": "opencode-telematics",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Opencode usage analytics dashboard",
-  "private": true,
+  "bin": {
+    "opencode-telematics": "bin/cli.js"
+  },
+  "files": [
+    "bin/",
+    "app/evidence.config.yaml",
+    "app/package.json",
+    "app/package-lock.json",
+    "app/pages/",
+    "app/components/",
+    "app/sources/opencode/connection.template.yaml",
+    "app/sources/opencode/messageCounts.sql",
+    "app/sources/opencode/modelDistribution.sql",
+    "app/sources/opencode/modelUsageByDay.sql",
+    "app/sources/opencode/overviewStats.sql",
+    "app/sources/opencode/partCounts.sql",
+    "app/sources/opencode/projectCostList.sql",
+    "app/sources/opencode/projectInfo.sql",
+    "app/sources/opencode/sessionRows.sql",
+    "app/sources/opencode/sessionsOverTime.sql"
+  ],
   "scripts": {
     "dev": "cd app && npm run dev",
     "build": "cd app && npm run build",
     "build:strict": "cd app && npm run build:strict",
     "sources": "cd app && npm run sources",
     "sources:strict": "cd app && npm run sources:strict",
-    "preview": "cd app && npm run preview"
+    "preview": "cd app && npm run preview",
+    "postinstall": "cd app && npm install"
   },
   "repository": {
     "type": "git",
