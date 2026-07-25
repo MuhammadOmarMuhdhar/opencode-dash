@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { join, resolve, extname } = require('path');
-const { homedir, platform } = require('os');
-const { existsSync, copyFileSync, symlinkSync, unlinkSync, readFileSync, createReadStream } = require('fs');
+const { homedir, platform, tmpdir } = require('os');
+const { existsSync, copyFileSync, symlinkSync, unlinkSync, rmSync, createReadStream } = require('fs');
 const { spawnSync } = require('child_process');
 const http = require('http');
 
@@ -17,6 +17,8 @@ const MIME = {
   '.json': 'application/json', '.png': 'image/png', '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2',
   '.woff': 'font/woff', '.ttf': 'font/ttf', '.arrow': 'application/octet-stream',
+  '.wasm': 'application/wasm',
+  '.parquet': 'application/octet-stream',
 };
 
 function getDbPath() {
@@ -54,11 +56,29 @@ if (platform() === 'win32') {
 
 console.log(`  Database: ${dbPath}\n`);
 
+rmSync(join(APP_DIR, '.evidence'), { recursive: true, force: true });
+rmSync(join(APP_DIR, '.gitignore'), { force: true });
+
+const autoimportPath = join(APP_DIR, 'node_modules', '@evidence-dev', 'sdk', 'node_modules', 'sveltekit-autoimport', 'src', 'index.js');
+if (existsSync(autoimportPath)) {
+  let autoimportSrc = require('fs').readFileSync(autoimportPath, 'utf-8');
+  if (!autoimportSrc.includes("'opencode-patched'")) {
+    autoimportSrc = autoimportSrc.replace(
+      "'**/node_modules/**'",
+      "'opencode-patched'"
+    );
+    require('fs').writeFileSync(autoimportPath, autoimportSrc);
+  }
+}
+
 console.log('  Extracting data sources...');
 if (!runNpm('sources')) {
   console.error('\n  Failed to extract data sources. See above for details.\n');
   process.exit(1);
 }
+
+try { unlinkSync(SYMLINK_PATH); } catch (_) {}
+try { unlinkSync(CONNECTION_PATH); } catch (_) {}
 
 console.log('\n  Building static dashboard...');
 if (!runNpm('build')) {

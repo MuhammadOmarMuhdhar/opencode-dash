@@ -31,15 +31,11 @@ SELECT
 FROM filtered_sessions
 ```
 
-```sql all_session_dates
-select session_date from opencode.sessionsOverTime
-```
-
 <ShareSection title="Activity" sectionId="activity-section">
 
 ## Activity
 
-<DateRange name="dateRange" data={all_session_dates} dates=session_date title="Date Range" presetRanges={['Last 7 Days', 'Last 30 Days', 'Year to Date', 'Last 90 Days', 'All Time']} defaultValue='All Time' />
+<DateRange name="dateRange" start="2024-01-01" title="Date Range" presetRanges={['Last 7 Days', 'Last 30 Days', 'Year to Date', 'Last 90 Days', 'All Time']} defaultValue='All Time' />
 
 <!-- <Value data={overview} column=date_from fmt="mmm d, yyyy"/> - <Value data={overview} column=date_to fmt="mmm d, yyyy"/> -->
 
