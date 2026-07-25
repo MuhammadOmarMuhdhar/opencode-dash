@@ -1,4 +1,4 @@
-name: Publish
+name: Publish to npm
 on:
   push:
     tags:
@@ -14,13 +14,6 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: cd app && npm install
       - run: npm run build
-
-      - name: Publish to npm
-        run: npm publish
+      - run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Publish to GitHub Packages
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
-          npm publish --registry https://npm.pkg.github.com
