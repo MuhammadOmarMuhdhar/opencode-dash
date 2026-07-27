@@ -2,7 +2,7 @@
 const { join, resolve, extname } = require('path');
 const { homedir, platform, tmpdir } = require('os');
 const { existsSync, copyFileSync, symlinkSync, unlinkSync, rmSync, createReadStream } = require('fs');
-const { spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 const http = require('http');
 
 const APP_DIR = resolve(__dirname, '..', 'app');
@@ -30,61 +30,88 @@ function getDbPath() {
   return join(home, '.local', 'share', 'opencode', 'opencode.db');
 }
 
-function runNpm(script) {
-  const cmd = platform() === 'win32' ? 'npm.cmd' : 'npm';
-  const result = spawnSync(cmd, ['run', script], { cwd: APP_DIR, stdio: 'inherit', shell: true });
-  return result.status === 0;
+function runWithSpinner(script, label) {
+  return new Promise((resolve, reject) => {
+    const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+    let i = 0;
+    const t = setInterval(() => {
+      process.stdout.write(`\r  ${frames[i]} ${label}...`);
+      i = (i + 1) % frames.length;
+    }, 80);
+
+    const cmd = platform() === 'win32' ? 'npm.cmd' : 'npm';
+    const child = spawn(cmd, ['run', script], { cwd: APP_DIR, stdio: ['ignore', 'pipe', 'pipe'] });
+    let output = '';
+    child.stdout.on('data', d => output += d);
+    child.stderr.on('data', d => output += d);
+    child.on('close', code => {
+      clearInterval(t);
+      if (code === 0) {
+        process.stdout.write(`\r  \x1b[32m\u2713\x1b[0m ${label} \x1b[K\n`);
+        resolve();
+      } else {
+        process.stderr.write(output);
+        reject(new Error(`${label} failed (exit code ${code})`));
+      }
+    });
+  });
 }
 
-const dbPath = getDbPath();
-if (!existsSync(dbPath)) {
-  console.error(`\n  Opencode database not found at:\n    ${dbPath}`);
-  console.error('\n  Make sure opencode CLI is installed and has been run at least once.\n');
-  process.exit(1);
-}
-
-if (existsSync(TEMPLATE_PATH)) {
-  copyFileSync(TEMPLATE_PATH, CONNECTION_PATH);
-}
-
-try { unlinkSync(SYMLINK_PATH); } catch (_) {}
-if (platform() === 'win32') {
-  copyFileSync(dbPath, SYMLINK_PATH);
-} else {
-  symlinkSync(dbPath, SYMLINK_PATH);
-}
-
-console.log(`  Database: ${dbPath}\n`);
-
-rmSync(join(APP_DIR, '.evidence'), { recursive: true, force: true });
-rmSync(join(APP_DIR, '.gitignore'), { force: true });
-
-const autoimportPath = join(APP_DIR, 'node_modules', '@evidence-dev', 'sdk', 'node_modules', 'sveltekit-autoimport', 'src', 'index.js');
-if (existsSync(autoimportPath)) {
-  let autoimportSrc = require('fs').readFileSync(autoimportPath, 'utf-8');
-  if (!autoimportSrc.includes("'opencode-patched'")) {
-    autoimportSrc = autoimportSrc.replace(
-      "'**/node_modules/**'",
-      "'opencode-patched'"
-    );
-    require('fs').writeFileSync(autoimportPath, autoimportSrc);
+(async () => {
+  const dbPath = getDbPath();
+  if (!existsSync(dbPath)) {
+    console.error(`\n  Opencode database not found at:\n    ${dbPath}`);
+    console.error('\n  Make sure opencode CLI is installed and has been run at least once.\n');
+    process.exit(1);
   }
-}
 
-console.log('  Extracting data sources...');
-if (!runNpm('sources')) {
-  console.error('\n  Failed to extract data sources. See above for details.\n');
-  process.exit(1);
-}
+  if (existsSync(TEMPLATE_PATH)) {
+    copyFileSync(TEMPLATE_PATH, CONNECTION_PATH);
+  }
 
-try { unlinkSync(SYMLINK_PATH); } catch (_) {}
-try { unlinkSync(CONNECTION_PATH); } catch (_) {}
+  try { unlinkSync(SYMLINK_PATH); } catch (_) {}
+  if (platform() === 'win32') {
+    copyFileSync(dbPath, SYMLINK_PATH);
+  } else {
+    symlinkSync(dbPath, SYMLINK_PATH);
+  }
 
-console.log('\n  Building static dashboard...');
-if (!runNpm('build')) {
-  console.error('\n  Failed to build dashboard. See above for details.\n');
-  process.exit(1);
-}
+  console.log(`  \x1b[90mDatabase:\x1b[0m ${dbPath}\n`);
+
+  rmSync(join(APP_DIR, '.evidence'), { recursive: true, force: true });
+  rmSync(join(APP_DIR, '.gitignore'), { force: true });
+
+  const autoimportPath = join(APP_DIR, 'node_modules', '@evidence-dev', 'sdk', 'node_modules', 'sveltekit-autoimport', 'src', 'index.js');
+  if (existsSync(autoimportPath)) {
+    let autoimportSrc = require('fs').readFileSync(autoimportPath, 'utf-8');
+    if (!autoimportSrc.includes("'opencode-patched'")) {
+      autoimportSrc = autoimportSrc.replace(
+        "'**/node_modules/**'",
+        "'opencode-patched'"
+      );
+      require('fs').writeFileSync(autoimportPath, autoimportSrc);
+    }
+  }
+
+  try {
+    await runWithSpinner('sources', 'Extracting data sources');
+  } catch (e) {
+    console.error(`\n  ${e.message}\n`);
+    process.exit(1);
+  }
+
+  try { unlinkSync(SYMLINK_PATH); } catch (_) {}
+  try { unlinkSync(CONNECTION_PATH); } catch (_) {}
+
+  try {
+    await runWithSpinner('build', 'Building static dashboard');
+  } catch (e) {
+    console.error(`\n  ${e.message}\n`);
+    process.exit(1);
+  }
+
+  startServer(parseInt(process.env.PORT) || 3000);
+})();
 
 function startServer(port) {
   const server = http.createServer((req, res) => {
@@ -110,4 +137,3 @@ function startServer(port) {
   });
 }
 
-startServer(parseInt(process.env.PORT) || 3000);
