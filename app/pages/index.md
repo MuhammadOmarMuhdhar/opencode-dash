@@ -19,7 +19,7 @@ SELECT
   (SELECT COUNT(*) FROM filtered_sessions) as total_sessions,
   (SELECT SUM(message_count) FROM opencode.messageCounts WHERE session_id IN (SELECT id FROM filtered_sessions)) as total_messages,
   (SELECT SUM(part_count) FROM opencode.partCounts WHERE session_id IN (SELECT id FROM filtered_sessions)) as total_parts,
-  (SELECT COUNT(*) FROM opencode.projectInfo WHERE id IN (SELECT project_id FROM filtered_sessions)) as total_projects,
+  (SELECT COUNT(DISTINCT display_name) FROM opencode.projectInfo WHERE id IN (SELECT project_id FROM filtered_sessions)) as total_projects,
   COALESCE(ROUND(SUM(cost), 6), 0) as total_cost,
   COALESCE(SUM(tokens_input + tokens_output + tokens_reasoning + tokens_cache_read + tokens_cache_write), 0) as total_tokens,
   COALESCE(ROUND(AVG(cost), 6), 0) as avg_session_cost,
@@ -165,9 +165,6 @@ short_paths AS (
 )
 SELECT
   sp.short_path as project,
-  sp.vcs,
-  sp.timeCreated,
-  sp.timeUpdated,
   COUNT(s.id) as sessionCount,
   ROUND(SUM(COALESCE(s.cost, 0)), 6) as totalCost,
   SUM(COALESCE(s.tokens_input, 0) + COALESCE(s.tokens_output, 0) + COALESCE(s.tokens_reasoning, 0) + COALESCE(s.tokens_cache_read, 0) + COALESCE(s.tokens_cache_write, 0)) as totalTokens
@@ -175,7 +172,7 @@ FROM short_paths sp
 LEFT JOIN opencode.sessionRows s ON s.project_id = sp.id
   AND ('${inputs.dateRange.start}' = '' OR s.session_date >= '${inputs.dateRange.start}')
   AND ('${inputs.dateRange.end}' = '' OR s.session_date <= '${inputs.dateRange.end}')
-GROUP BY sp.id, sp.short_path, sp.vcs, sp.timeCreated, sp.timeUpdated
+GROUP BY sp.short_path
 ORDER BY sessionCount DESC
 ```
 

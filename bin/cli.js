@@ -40,7 +40,7 @@ function runWithSpinner(script, label) {
     }, 80);
 
     const cmd = platform() === 'win32' ? 'npm.cmd' : 'npm';
-    const child = spawn(cmd, ['run', script], { cwd: APP_DIR, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(cmd, ['run', script], { cwd: APP_DIR, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, NODE_NO_WARNINGS: '1' } });
     let output = '';
     child.stdout.on('data', d => output += d);
     child.stderr.on('data', d => output += d);

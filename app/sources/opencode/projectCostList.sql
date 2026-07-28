@@ -8,5 +8,5 @@ SELECT
   SUM(COALESCE(s.tokens_input, 0) + COALESCE(s.tokens_output, 0) + COALESCE(s.tokens_reasoning, 0) + COALESCE(s.tokens_cache_read, 0) + COALESCE(s.tokens_cache_write, 0)) as totalTokens
 FROM project p
 LEFT JOIN session s ON s.project_id = p.id
-GROUP BY p.id
+GROUP BY p.worktree
 ORDER BY sessionCount DESC

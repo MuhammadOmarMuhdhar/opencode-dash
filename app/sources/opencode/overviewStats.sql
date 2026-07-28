@@ -2,7 +2,7 @@ SELECT
   (SELECT COUNT(*) FROM session) as total_sessions,
   (SELECT COUNT(*) FROM message) as total_messages,
   (SELECT COUNT(*) FROM part) as total_parts,
-  (SELECT COUNT(*) FROM project) as total_projects,
+  (SELECT COUNT(DISTINCT COALESCE(name, worktree)) FROM project) as total_projects,
   COALESCE(ROUND(SUM(cost), 6), 0) as total_cost,
   COALESCE(SUM(tokens_input + tokens_output + tokens_reasoning + tokens_cache_read + tokens_cache_write), 0) as total_tokens,
   COALESCE(ROUND(AVG(cost), 6), 0) as avg_session_cost,
