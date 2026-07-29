@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 const { join, resolve, extname } = require('path');
-const { homedir, platform, tmpdir } = require('os');
+const { platform } = require('os');
 const { existsSync, copyFileSync, symlinkSync, unlinkSync, rmSync, createReadStream } = require('fs');
 const { spawn } = require('child_process');
 const http = require('http');
+
+const { getDbPath, getCandidatePaths } = require('../lib/db-path');
 
 const APP_DIR = resolve(__dirname, '..', 'app');
 const SOURCE_DIR = join(APP_DIR, 'sources', 'opencode');
@@ -20,15 +22,6 @@ const MIME = {
   '.wasm': 'application/wasm',
   '.parquet': 'application/octet-stream',
 };
-
-function getDbPath() {
-  const home = homedir();
-  if (platform() === 'win32') {
-    const localAppData = process.env.LOCALAPPDATA || join(home, 'AppData', 'Local');
-    return join(localAppData, 'opencode', 'opencode.db');
-  }
-  return join(home, '.local', 'share', 'opencode', 'opencode.db');
-}
 
 function runWithSpinner(script, label) {
   return new Promise((resolve, reject) => {
@@ -60,8 +53,13 @@ function runWithSpinner(script, label) {
 (async () => {
   const dbPath = getDbPath();
   if (!existsSync(dbPath)) {
-    console.error(`\n  Opencode database not found at:\n    ${dbPath}`);
-    console.error('\n  Make sure opencode CLI is installed and has been run at least once.\n');
+    console.error(`\n  Opencode database not found.`);
+    console.error(`  Tried the following locations:\n`);
+    for (const loc of getCandidatePaths()) {
+      console.error(`    ${loc}`);
+    }
+    console.error(`\n  Make sure opencode CLI is installed and has been run at least once.`);
+    console.error(`  You can set OPENCODE_DB to point directly to your database file.\n`);
     process.exit(1);
   }
 

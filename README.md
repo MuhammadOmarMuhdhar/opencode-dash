@@ -42,11 +42,18 @@ Opens a local dashboard at `http://localhost:3000` showing your sessions, tokens
 
 
 ## How It Works
-- Reads opencode's SQLite database (`~/.local/share/opencode/opencode.db` on macOS/Linux, `%LOCALAPPDATA%/opencode/opencode.db` on Windows)
+- Reads opencode's SQLite database (`~/.local/share/opencode/opencode.db` on all platforms, or `$XDG_DATA_HOME/opencode/opencode.db` when set)
 - Built on [Evidence.dev](https://evidence.dev) - lightweight SQL-driven, Svelte-based reporting
 - Static site output: `npm run build` produces a deployable `build/` directory
 - No backend or account creation needed. So the data stays on your device.
 
+### Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `OPENCODE_DB` | Absolute path to the database file (bypasses all auto-detection) |
+| `OPENCODE_DATA_DIR` | Custom opencode data directory |
+| `XDG_DATA_HOME` | Override the XDG data home (default: `~/.local/share`) |
 
 ## Contribution
 
@@ -56,6 +63,8 @@ Opens a local dashboard at `http://localhost:3000` showing your sessions, tokens
 opencode-telematics/
 ├── bin/
 │   └── cli.js                 # CLI entry point — detects OS, launches dashboard
+├── lib/
+│   └── db-path.js             # DB path resolution (xdg-basedir, env overrides)
 ├── app/
 │   ├── pages/                 # Dashboard pages (.md)
 │   │   ├── index.md           # Overview
@@ -71,7 +80,9 @@ opencode-telematics/
 │   ├── sources/opencode/      # SQL queries (.sql) + connection config
 │   ├── build/                 # Static site output (generated)
 │   └── evidence.config.yaml
-├── test/                      # E2E smoke tests
+├── test/
+│   ├── db-path.test.js        # Unit tests — DB path resolution
+│   └── e2e.test.js            # E2E smoke tests
 └── package.json               # Root CLI package
 ```
 
@@ -94,8 +105,16 @@ Other tables: `todo`, `event`, `event_sequence`.
 git clone https://github.com/MuhammadOmarMuhdhar/opencode-dash.git
 cd opencode-dash
 npm install
+
+# Prepare source connection, build, and preview
+cp app/sources/opencode/connection.template.yaml app/sources/opencode/connection.yaml
+ln -sf ~/.local/share/opencode/opencode.db app/sources/opencode/opencode.db
 npm run sources
 npm run build
+npm run preview
+
+# Or just use the CLI (handles all preparation automatically):
+node bin/cli.js
 ```
 
 
@@ -103,20 +122,34 @@ npm run build
 
 | Command | Scope |
 |---------|-------|
-| `npm run build` | CI - builds static dashboard, catches broken SQL and layout errors | 
-| `npm run test:e2e` | E2E - full npx simulation (pack → install → build → serve → page fetch) | 
+| `node --test test/db-path.test.js` | Unit tests — validates DB path resolution across all OS/env scenarios |
+| `npm run build` | CI — builds static dashboard, catches broken SQL and layout errors |
+| `npm run test:e2e` | E2E — full npx simulation (pack → install → build → serve → page fetch) |
 
-CI runs `npm run build` on every push and PR.
+CI runs `npm run build` on every push and PR. Unit tests can be run locally:
+
+```bash
+node --test test/db-path.test.js
+```
 
 ### Local tarball test
 
 ```bash
 rm -rf app/.evidence/ app/build/ app/.sources-manifest.json
+
+# Prepare source connection (normally done by bin/cli.js)
+cp app/sources/opencode/connection.template.yaml app/sources/opencode/connection.yaml
+ln -sf ~/.local/share/opencode/opencode.db app/sources/opencode/opencode.db
+
 npm run sources
 npm run build
 rm -f app/.gitignore
+
+# Clean up prepared files
+rm -f app/sources/opencode/connection.yaml app/sources/opencode/opencode.db
+
 npm pack
-npm install -g ./opencode-dash-1.0.0.tgz
+npm install -g ./opencode-dash-1.0.4.tgz
 opencode-dash
 ```
 
