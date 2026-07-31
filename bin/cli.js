@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 const { join, resolve, extname } = require('path');
 const { platform } = require('os');
-const { existsSync, copyFileSync, symlinkSync, unlinkSync, rmSync, createReadStream } = require('fs');
+const { existsSync, copyFileSync, symlinkSync, unlinkSync, rmSync, createReadStream, statSync } = require('fs');
 const { spawn } = require('child_process');
 const http = require('http');
 
@@ -52,6 +52,7 @@ function runWithSpinner(script, label) {
 
 (async () => {
   const dbPath = getDbPath();
+  const goQuota = process.argv.slice(2).includes('--go');
   if (!existsSync(dbPath)) {
     console.error(`\n  Opencode database not found.`);
     console.error(`  Tried the following locations:\n`);
@@ -108,12 +109,15 @@ function runWithSpinner(script, label) {
     process.exit(1);
   }
 
-  startServer(parseInt(process.env.PORT) || 3000);
+  startServer(parseInt(process.env.PORT) || 3000, goQuota);
 })();
 
-function startServer(port) {
+function startServer(port, goQuota) {
   const server = http.createServer((req, res) => {
     let filePath = join(BUILD_DIR, req.url === '/' ? '/index.html' : req.url.split('?')[0]);
+    if (existsSync(filePath) && statSync(filePath).isDirectory()) {
+      filePath = join(filePath, 'index.html');
+    }
     if (!existsSync(filePath)) filePath = join(BUILD_DIR, 'index.html');
 
     const ext = extname(filePath);
@@ -122,12 +126,20 @@ function startServer(port) {
   });
 
   server.listen(port, () => {
-    console.log(`\n  Dashboard ready at http://localhost:${port}\n`);
+    const url = `http://localhost:${port}${goQuota ? '/go-quota' : ''}`;
+    const label = goQuota ? 'Go Quota ' : '';
+    console.log(`\n  ${label}Dashboard ready at ${url}\n`);
+
+    if (goQuota) {
+      const { exec } = require('child_process');
+      const cmd = platform() === 'darwin' ? 'open' : platform() === 'win32' ? 'start' : 'xdg-open';
+      exec(`${cmd} ${url}`);
+    }
   });
 
   server.on('error', (e) => {
     if (e.code === 'EADDRINUSE') {
-      startServer(port + 1);
+      startServer(port + 1, goQuota);
     } else {
       console.error('  Server error:', e.message);
       process.exit(1);

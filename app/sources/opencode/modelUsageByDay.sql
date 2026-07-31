@@ -8,3 +8,4 @@ FROM session
 WHERE model IS NOT NULL AND model != ''
 GROUP BY session_date, modelId, provider
 ORDER BY session_date, sessions DESC
+
