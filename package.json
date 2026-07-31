@@ -1,6 +1,6 @@
 {
   "name": "opencode-dash",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Dashboard for opencode CLI usage analytics",
   "bin": {
     "opencode-dash": "bin/cli.js"
