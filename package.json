@@ -29,14 +29,6 @@
     "app/pages/",
     "app/components/",
     "app/sources/opencode/connection.template.yaml",
-    "app/sources/opencode/messageCounts.sql",
-    "app/sources/opencode/modelDistribution.sql",
-    "app/sources/opencode/modelUsageByDay.sql",
-    "app/sources/opencode/overviewStats.sql",
-    "app/sources/opencode/partCounts.sql",
-    "app/sources/opencode/projectCostList.sql",
-    "app/sources/opencode/projectInfo.sql",
-    "app/sources/opencode/sessionRows.sql",
-    "app/sources/opencode/sessionsOverTime.sql"
+    "app/sources/opencode/*.sql"
   ]
 }
